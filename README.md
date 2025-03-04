@@ -1,5 +1,11 @@
 # Kolmogorov Arnold Network-Based Voice Pathology Detection
 
+
+
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.14967743.svg)](https://doi.org/10.5281/zenodo.14967743)
+
+
+
 This repository contains the code for the paper "Kolmogorov Arnold Network-Based Voice Pathology Detection"
 by Jan Vrba, Jakub Steinbach, Tomáš Jirsa, Jakub Seiner, Yuwen Zeng, Kei Ichiji, Noriyasu Homma
 
