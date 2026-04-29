@@ -11,19 +11,14 @@ import torch
 import numpy as np
 from kan import KAN
 
-from sklearn.model_selection import  StratifiedKFold
+from sklearn.model_selection import  StratifiedKFold, train_test_split
 from sklearn.preprocessing import MinMaxScaler
 
 from src.customsmote import CustomSMOTE
+import pandas as pd
 
 
 ############## Functions used as metrics
-def train_acc():
-    """
-    Train accuracy. That is how the PyKAN needs the metric functions.
-    """
-    return torch.mean((torch.argmax(model(dataset["train_input"]),
-                                    dim=1) == dataset["train_label"]).float())
 
 def train_uar():
     """
@@ -43,12 +38,6 @@ def train_uar():
     uar = 0.5 * (recall + specificity)
     return uar
 
-def test_acc():
-    """
-    Test accuracy. That is how the PyKAN needs the metric functions.
-    """
-    return torch.mean((torch.argmax(model(dataset["test_input"]),
-                                    dim=1) == dataset["test_label"]).float())
 
 def test_tp():
     """
@@ -113,6 +102,16 @@ def test_uar():
     return uar
 
 ###############
+def compute_class_weights(labels):
+    """
+    Compute inverse-frequency class weights for binary classification.
+    """
+    class_counts = np.bincount(labels.astype(np.int64), minlength=2)
+    total_samples = class_counts.sum()
+    weights = total_samples / (len(class_counts) * class_counts)
+    return torch.tensor(weights, dtype=torch_dtype, device=DEVICE)
+
+
 def set_seed(seed):
     """
     Function to set seed for reproducibility.
@@ -129,7 +128,7 @@ def set_seed(seed):
 
 
 
-RANDOM_SEED = 42 # You can choose any number you prefer
+RANDOM_SEED = 0 # You can choose any number you prefer
 
 # Set the CUBLAS_WORKSPACE_CONFIG environment variable
 os.environ['CUBLAS_WORKSPACE_CONFIG'] = ':4096:8'
@@ -151,106 +150,110 @@ evaluated_ks = [3, 4, 5]
 evaluated_grids = [5, 6, 7, 8]
 evaluated_entropy = [0.01, 0.1, 1.0]
 #evaluated_smoothing = [0.0, 0.1]
-evaluated_smoothing = [0.0, 0.1, 0.2]
+evaluated_smoothing = [0.0]
 regularization_part = ['edge_forward_spline_n',
                        'edge_forward_sum',
                        'edge_forward_spline_u']
 
-settings_set = product(
+settings_set = list(product(
     regularization_part, evaluated_entropy, evaluated_smoothing, evaluated_ks, evaluated_grids
-)
+))
 
-for regularization, entropy, smoothing, k, grid in settings_set:
-    for datadir in datasets.iterdir():
-        sex = datadir.stem
+
+
+for datadir in datasets.iterdir():
+    data = np.load(datadir.joinpath("datasets.npz"))
+    X = data['X']
+    y = data['y']
+    X_train, _, y_train, _ = train_test_split(
+        X, y, test_size=0.20, random_state=RANDOM_SEED, stratify=y)
+    sex = datadir.stem
+    skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=RANDOM_SEED)
+    for idx, (train_index, val_index) in enumerate(skf.split(X_train, y_train)):
+        X_train_inner, X_val = X_train[train_index], X_train[val_index]
+        y_train_inner, y_val = y_train[train_index], y_train[val_index]
+        class_weights = compute_class_weights(y_train_inner)
+
+        # KMeansSMOTE resampling. if 10x fails SMOTE resampling
+        # X_resampled, y_resampled = CustomSMOTE(random_state=RANDOM_SEED).fit_resample(X_train_inner,
+        #                                                                               y_train_inner)
+        # MinMaxScaling
+        scaler = MinMaxScaler(feature_range=(-1, 1))
+
+        X_train_scaled = scaler.fit_transform(X_train_inner).astype(np.float32)
+        X_val_scaled = scaler.transform(X_val).astype(np.float32)
+
+        # KAN dataset format, load it to device
+        dataset = {
+            "train_input": torch.from_numpy(X_train_scaled).type(torch_dtype).to(DEVICE),
+            "train_label": torch.from_numpy(y_train_inner).to(DEVICE),
+            "test_input": torch.from_numpy(X_val_scaled).type(torch_dtype).to(DEVICE),
+            "test_label": torch.from_numpy(y_val).to(DEVICE)
+        }
         # load dataset
-        data = np.load(datadir.joinpath("datasets.npz"))
-        X=data['X']
-        y=data['y']
+        for regularization, entropy, smoothing, k, grid in settings_set:
+            loss_fn = torch.nn.CrossEntropyLoss(
+                weight=class_weights,
+                label_smoothing=smoothing
+            )
+            # path where to store results
+            results_path = Path(".", "results_kan_params_5epochs_nested",
+                                f"g{grid}_k{k}_entropy{entropy}_smoothing{smoothing}_reg{regularization}",
+                                sex)
+            # get the number of features
+            input_size = X.shape[1]
+            # define KAN architectures
+            steps = list(np.linspace(0, 2, 11))
+            kan_archs = []
+            for first in steps:
+                first_layer = input_size * 2 - int(first * input_size)
+                if first_layer > 0:
+                    kan_archs.append([input_size, first_layer, 2])
+                    for second in steps:
+                        second_layer = input_size * 2 - int(second * input_size)
+                        if first_layer >= second_layer > 0:
+                            kan_archs.append([input_size, first_layer, second_layer, 2])
 
-        # path where to store results
-        results_path = Path(".", "results_kan_params_5epochs_nested",
-                            f"g{grid}_k{k}_entropy{entropy}_smoothing{smoothing}_reg{regularization}",
-                            sex)
-        # get the number of features
-        input_size = X.shape[1]
-        # define KAN architectures
-        steps = list(np.linspace(0, 2, 11))
-        kan_archs = []
-        for first in steps:
-            first_layer = input_size * 2 - int(first * input_size)
-            if first_layer > 0:
-                kan_archs.append([input_size, first_layer, 2])
-                for second in steps:
-                    second_layer = input_size * 2 - int(second * input_size)
-                    if first_layer >= second_layer > 0:
-                        kan_archs.append([input_size, first_layer, second_layer, 2])
+            # iterate over KAN architectures and train for each dataset
+            for arch in kan_archs:
+                # set_seed(N_SEED) # This would be the preffered way
 
-        # iterate over KAN architectures and train for each dataset
-        for arch in kan_archs:
-            # set_seed(N_SEED) # This would be the preffered way
+                # create results directory for each dataset (done when defining results_path)
+                # and evaluated architecture
+                result_dir = results_path.joinpath(str(arch).replace(
+                    ",", "_").replace(" ", "").replace(
+                    "[", "").replace("]", ""))
+                if result_dir.exists() and len(list(result_dir.iterdir())) == 10:
+                    continue
+                result_dir.mkdir(parents=True, exist_ok=True)
 
-            # create results directory for each dataset (done when defining results_path)
-            # and evaluated architecture
-            result_dir = results_path.joinpath(str(arch).replace(
-                ",", "_").replace(" ", "").replace(
-                "[", "").replace("]", ""))
-            if result_dir.exists() and len(list(result_dir.iterdir())) == 10:
-                continue
-            result_dir.mkdir(parents=True, exist_ok=True)
+                #print(f"evaluating {str(arch)}")
 
-            print(f"evaluating {str(arch)}")
-            skf = StratifiedKFold(n_splits=10, shuffle=True, random_state=RANDOM_SEED)
-            for idx, (train_index, test_index) in enumerate(skf.split(X, y)):
-                X_train, X_test = X[train_index], X[test_index]
-                y_train, y_test = y[train_index], y[test_index]
-
-                # KMeansSMOTE resampling. if 10x fails SMOTE resampling
-                X_resampled, y_resampled = CustomSMOTE(random_state=RANDOM_SEED).fit_resample(X_train,
-                                                                                                y_train)
-                # MinMaxScaling
-                scaler = MinMaxScaler(feature_range=(-1, 1))
-                X_train_scaled = scaler.fit_transform(X_resampled).astype(np.float32)
-                X_test_scaled = scaler.transform(X_test).astype(np.float32)
-
-
-
-                # KAN dataset format, load it to device
-                dataset = {
-                    "train_input": torch.from_numpy(X_train_scaled).type(torch_dtype).to(DEVICE),
-                    "train_label": torch.from_numpy(y_resampled).to(DEVICE),
-                    "test_input": torch.from_numpy(X_test_scaled).type(torch_dtype).to(DEVICE),
-                    "test_label": torch.from_numpy(y_test).to(DEVICE)
-                }
 
                 # create KAN model
                 model = KAN(width=arch, grid=grid, k=k, seed=RANDOM_SEED,
-                            auto_save=False, save_act=True)
+                            auto_save=False, save_act=True, device=DEVICE)
                 # load model to device
-                model.to(DEVICE)
+                #model.to(DEVICE)
                 # train model
-                print(dataset["train_input"].shape, dataset["test_input"].shape)
-                results = model.fit(dataset, opt="LBFGS", lamb=0.001, lamb_entropy=entropy ,steps=5,
-                                    batch=-1, update_grid=False,
+                #print(dataset["train_input"].shape, dataset["test_input"].shape)
+                results = model.fit(dataset, opt="LBFGS", lamb=0.001, lamb_entropy=entropy ,steps=10,
+                                    batch=-1, update_grid=True,
                                     metrics=(
-                                        train_acc, train_uar, test_acc, test_tn,
+                                        train_uar, test_tn,
                                         test_tp, test_fn, test_fp, test_uar
-                                    ), loss_fn=torch.nn.CrossEntropyLoss(label_smoothing=smoothing),
+                                    ), loss_fn=loss_fn,
                                     reg_metric=regularization)
                 # results = model.fit(dataset, opt="Adam", lr=0.01, steps=1000, batch=32, update_grid=False,
                 #           metrics=(
                 #               train_acc, train_uar, test_acc, test_tn, test_tp, test_fn, test_fp, test_uar
                 #           ), loss_fn=torch.nn.CrossEntropyLoss())
                 # infotainment during training
-                print(f"final test acc: {results['test_acc'][-1]}",
-                        f"mean test acc: {np.mean(results['test_acc'])}",
-                        f"best test uar: {np.max(results['test_uar'])} ",
-                        f"best test epoch uar: {np.argmax(results['test_uar'])}",
-                        f"best train epoch uar: {np.argmax(results['train_uar'])}",
-                        f"best train loss epoch uar: {np.argmin(results['train_loss'])}",
-                        f"best test loss epoch: {np.argmax(results['test_loss'])}")
-                print(f"uar: {results['test_uar']}")
+                #print(f"best val uar: {np.max(results['test_uar'])}")
+                #print(f"uar: {results['test_uar']}")
 
                 # dump results
-                with open(result_dir.joinpath(f'kan_res_{idx+1}.pickle'), "wb") as output_file:
-                    pickle.dump(results, output_file)
+                #print(results)
+                # with open(result_dir.joinpath(f'kan_res_{idx+1}.pickle'), "wb") as output_file:
+                #     pickle.dump(results, output_file)
+                pd.DataFrame(results).to_csv(result_dir.joinpath(f"kan_res_{idx+1}.csv"))

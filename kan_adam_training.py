@@ -143,25 +143,26 @@ datasets = Path("", "training_data")
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 torch.set_default_device(DEVICE)
 best_archs = {
-    "men": {
-        "k": 4,
-        "grid": 6,
-        "entropy": 0.01,
-        "smoothing": 0.0,
-        "reg": "edge_forward_spline_n",
-        "arch": [21,42,26,2]
-    },
+    # "men": {
+    #     "k": 3,
+    #     "grid": 5,
+    #     "entropy": 0.1,
+    #     "smoothing": 0.2,
+    #     "reg": "edge_forward_spline_n",
+    #     "arch": [20,16,2]
+    # },
+    # BEST MEN DICT: {20_16_2 PosixPath('../results_kan_params_5epochs/g5_k3_entropy0.1_smoothing0.2_regedge_forward_spline_n')}
     "women": {
         "k": 5,
-        "grid": 7,
+        "grid": 5,
         "entropy": 1.0,
-        "smoothing": 0.0,
-        "reg": "edge_forward_spline_u",
-        "arch": [21,34,26,2]
+        "smoothing": 0.1,
+        "reg": "edge_forward_sum",
+        "arch": [20,36,20,2]
     }
 }
 
-lr_list=[0.01, 0.05, 0.001, 0.005, 0.0001, 0.0005, 0.00001, 0.00005,  0.000001, 0.000005]
+lr_list=[0.1, 0.5, 0.01, 0.05, 0.001, 0.005]
 
 for sex, best_dict in best_archs.items():
     datadir = Path("training_data", sex)
@@ -221,7 +222,7 @@ for sex, best_dict in best_archs.items():
             model.to(DEVICE)
             # train model
             print(dataset["train_input"].shape, dataset["test_input"].shape)
-            results = model.fit(dataset, opt="Adam", lr=lrs, lamb=0.001, lamb_entropy=entropy, steps=200,
+            results = model.fit(dataset, opt="Adam", lr=lrs, lamb=0.001, lamb_entropy=entropy, steps=500,
                                 batch=-1, update_grid=False,
                                 metrics=(
                                     train_acc, train_uar, test_acc, test_tn, test_tp, test_fn,

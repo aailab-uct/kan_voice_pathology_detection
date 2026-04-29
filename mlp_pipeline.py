@@ -133,6 +133,8 @@ def main():
     for datadir in datasets.iterdir():
         sex = datadir.stem
         print(f"evaluating {sex}")
+        if "women" in sex:
+            continue
         # load dataset
         data = np.load(datadir.joinpath("datasets.npz"))
         X=data['X']
@@ -190,7 +192,7 @@ def main():
                 val_loader = DataLoader(val_dataset, batch_size=len(y_test), shuffle=False)
                 # create model
                 model = MLP(arch).to(DEVICE)
-                results = train_and_evaluate(model, train_loader, val_loader, epochs=50, device=DEVICE)
+                results = train_and_evaluate(model, train_loader, val_loader, epochs=500, device=DEVICE)
                 best_uar.append(np.max(results["uar"]))
                 with open(result_dir.joinpath(f'mlp_res_{idx+1}.pickle'), "wb") as output_file:
                     pickle.dump(results, output_file)

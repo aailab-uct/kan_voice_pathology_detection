@@ -28,13 +28,16 @@ def compose_dataset(dataset_params: dict) -> None:
     y = []
 
     with open("features.csv", newline="", encoding="utf-8") as csv_file:
+
         # read feature set
         dataset = csv.DictReader(csv_file, dialect="unix")
+
         patient: dict
         # iterate over pations
         for patient in dataset:
             patient_features = []
             patient.pop("session_id")
+            patient.pop("nan")
             # select patients according to the specified sex
             if int(patient.pop("sex")) == dataset_params["sex"] or dataset_params["sex"] is None:
                 # check specified features and add them to dataset that will be dumped

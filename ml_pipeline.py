@@ -63,7 +63,7 @@ def main(sex: str = "women",
 
     # sklearn gridsearch with cross validation
     grid_search = GridSearchCV(pipeline, param_grid, cv=cross_validation, scoring=scoring_dict,
-                                n_jobs=-1, refit=False, verbose=1)
+                                n_jobs=1, refit=False, verbose=1)
     grid_search.fit(X, y)
 
 
@@ -86,7 +86,7 @@ def main(sex: str = "women",
 
 
 if __name__ == "__main__":
-    for current_classifier in ["knn", "svm_poly", "svm_rbf", "gauss_nb", "random_forest", "adaboost"]:
+    for current_classifier in ["adaboost"]: #["knn", "svm_poly", "svm_rbf", "gauss_nb", "random_forest", "adaboost"]:
         for current_sex in ["women", "men"]:
             print(f"Computing {current_classifier} for {current_sex}")
             main(current_sex, current_classifier)

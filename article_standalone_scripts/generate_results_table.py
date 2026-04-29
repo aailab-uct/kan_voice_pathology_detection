@@ -4,8 +4,8 @@ This script handles generation of the latex table for the best performing datase
 from pathlib import Path
 import pandas as pd
 
-from ..analyze_results_kan import main as get_best_kan
-from ..analyze_results_mlp import main as get_best_mlp
+from analyze_results_kan import main as get_best_kan
+from analyze_results_mlp import main as get_best_mlp
 
 
 

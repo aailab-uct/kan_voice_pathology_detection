@@ -7,7 +7,7 @@ from matplotlib import pyplot as plt
 best_uar = 0
 actual_uar = 10 * [0]
 best_arch = ""
-sex = "men"
+sex = "women"
 for params_setting in tqdm.tqdm(Path("..", "results_kan_adam").iterdir()):
     try:
         for arch in params_setting.joinpath(sex).iterdir():
@@ -23,17 +23,20 @@ for params_setting in tqdm.tqdm(Path("..", "results_kan_adam").iterdir()):
         pass
 print(f"best settings {best_settings}:best arch {best_arch} - uar: {best_uar}")
 
-loss_path = Path("results_kan_adam", best_settings, sex, best_arch)
+loss_path = Path("..", "results_kan_adam", best_settings, sex, best_arch)
 plt.figure(figsize=(10, 6))
+print(loss_path)
+print(loss_path.resolve())
 for idx, file_path in enumerate(loss_path.glob('*.pickle')):
-    #print(f'opening {file_path.name}')
+    print(f'opening {file_path.name}')
 
     with open(file_path, 'rb') as f:
         data = pickle.load(f)
+    print(data.keys())
     loss_values = data['test_loss']
     val_loss_values = data['test_uar']
     # Plot loss function values
-    plt.plot(list(range(1, 201)), val_loss_values, label=f'Loss cross-val split {idx + 1}')
+    plt.plot(list(range(1, 501)), val_loss_values, label=f'Loss cross-val split {idx + 1}')
 
 plt.xlabel('Epochs')
 plt.ylabel('Loss')
@@ -41,7 +44,7 @@ plt.title('Loss Function Over Epochs')
 plt.legend()
 plt.grid()
 plt.tight_layout()
-plt.xticks([1] + list(range(10, 101, 10)))
-plt.xlim([1, 200])
+plt.xticks([1] + list(range(10, 501, 20)))
+plt.xlim([1, 500])
 # plt.savefig('kan_women_train.pdf', dpi=300, format='pdf')
 plt.show()

@@ -38,7 +38,7 @@ def main():
         "men": 0.0,
     }
 
-    pickled_results_path = Path("..", "results_kan_adam")
+    pickled_results_path = Path("..", "results_kan_params_5epochs")
     for kan_settings in tqdm(sorted(pickled_results_path.iterdir())):
         for dataset in sorted(kan_settings.iterdir()):
             sex = dataset.name
@@ -65,7 +65,7 @@ def main():
                 fps = result_all_splits["test_fp"][np.arange(len(best_idx)), best_idx]
                 tns = result_all_splits["test_tn"][np.arange(len(best_idx)), best_idx]
                 fns = result_all_splits["test_fn"][np.arange(len(best_idx)), best_idx]
-
+                print(f"tps: {tps}")
                 sensitivity = tps/(tps+fns)
                 specificity = tns/(tns+fps)
                 try:
@@ -74,7 +74,8 @@ def main():
                     # Zero division
                     mcc = -1*np.ones_like(specificity)
 
-
+                if sex == "men":
+                    print(np.mean(sensitivity/2+specificity/2), kan_settings)
                 if np.mean(sensitivity/2+specificity/2) > best_results[sex]["uar"]:
                     best_results[sex]["mcc"] = np.mean(mcc)
                     best_results[sex]["mcc_std"] = np.std(mcc)
@@ -89,6 +90,7 @@ def main():
                     best_results[sex]["uar"] = np.mean(sensitivity/2+specificity/2)
                     best_results[sex]["uar_std"] = np.std(sensitivity/2+specificity/2)
                     best_results[sex]["architecture"] = arch.name
+                    best_results[sex]["folder_name"] = kan_settings
     print(f"Optimistic UAR: {optimistic_uar}")
     return best_results
 
