@@ -38,7 +38,7 @@ def main():
         "men": 0.0,
     }
 
-    pickled_results_path = Path("..", "results_kan_params_5epochs")
+    pickled_results_path = Path("..", "results_kan_adam")
     for kan_settings in tqdm(sorted(pickled_results_path.iterdir())):
         for dataset in sorted(kan_settings.iterdir()):
             sex = dataset.name
