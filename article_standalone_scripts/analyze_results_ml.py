@@ -14,7 +14,7 @@ if __name__ == "__main__":
         for sex in sexes:
             to_process = pd.read_csv(results_path.joinpath(sex, classifier, "results.csv"))
 
-            best = to_process[to_process.mean_test_mcc == to_process.mean_test_mcc.max()].iloc[0]
+            best = to_process[to_process.mean_test_uar == to_process.mean_test_uar.max()].iloc[0]
             cls_params[f"{classifier}_{sex}"] = best.params
             best["classifier"] = classifier
             best = best.drop(["params", "mean_test_accuracy"])
