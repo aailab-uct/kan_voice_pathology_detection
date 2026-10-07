@@ -1,6 +1,8 @@
 """
 KAN arch search script.
 """
+import contextlib
+import io
 import os
 import pickle
 from pathlib import Path
@@ -13,6 +15,7 @@ from kan import KAN
 
 from sklearn.model_selection import  StratifiedKFold, train_test_split
 from sklearn.preprocessing import MinMaxScaler
+from tqdm import tqdm
 
 from src.customsmote import CustomSMOTE
 import pandas as pd
@@ -150,7 +153,7 @@ evaluated_ks = [3, 4, 5]
 evaluated_grids = [5, 6, 7, 8]
 evaluated_entropy = [0.01, 0.1, 1.0]
 #evaluated_smoothing = [0.0, 0.1]
-evaluated_smoothing = [0.0]
+evaluated_smoothing = [0.1]
 regularization_part = ['edge_forward_spline_n',
                        'edge_forward_sum',
                        'edge_forward_spline_u']
@@ -162,6 +165,7 @@ settings_set = list(product(
 
 
 for datadir in datasets.iterdir():
+    print(f"Processing {datadir}")
     data = np.load(datadir.joinpath("datasets.npz"))
     X = data['X']
     y = data['y']
@@ -170,6 +174,7 @@ for datadir in datasets.iterdir():
     sex = datadir.stem
     skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=RANDOM_SEED)
     for idx, (train_index, val_index) in enumerate(skf.split(X_train, y_train)):
+        print(f"Running fold {idx}")
         X_train_inner, X_val = X_train[train_index], X_train[val_index]
         y_train_inner, y_val = y_train[train_index], y_train[val_index]
         class_weights = compute_class_weights(y_train_inner)
@@ -191,7 +196,7 @@ for datadir in datasets.iterdir():
             "test_label": torch.from_numpy(y_val).to(DEVICE)
         }
         # load dataset
-        for regularization, entropy, smoothing, k, grid in settings_set:
+        for regularization, entropy, smoothing, k, grid in tqdm(settings_set):
             loss_fn = torch.nn.CrossEntropyLoss(
                 weight=class_weights,
                 label_smoothing=smoothing
@@ -237,13 +242,14 @@ for datadir in datasets.iterdir():
                 #model.to(DEVICE)
                 # train model
                 #print(dataset["train_input"].shape, dataset["test_input"].shape)
-                results = model.fit(dataset, opt="LBFGS", lamb=0.001, lamb_entropy=entropy ,steps=10,
-                                    batch=-1, update_grid=True,
-                                    metrics=(
-                                        train_uar, test_tn,
-                                        test_tp, test_fn, test_fp, test_uar
-                                    ), loss_fn=loss_fn,
-                                    reg_metric=regularization)
+                with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
+                    results = model.fit(dataset, opt="LBFGS", lamb=0.001, lamb_entropy=entropy ,steps=10,
+                                        batch=-1, update_grid=True,
+                                        metrics=(
+                                            train_uar, test_tn,
+                                            test_tp, test_fn, test_fp, test_uar
+                                        ), loss_fn=loss_fn,
+                                        reg_metric=regularization)
                 # results = model.fit(dataset, opt="Adam", lr=0.01, steps=1000, batch=32, update_grid=False,
                 #           metrics=(
                 #               train_acc, train_uar, test_acc, test_tn, test_tp, test_fn, test_fp, test_uar
