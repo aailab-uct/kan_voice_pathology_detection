@@ -116,7 +116,7 @@ def generate_table_with_configs(table, params):
         header = ("\\begin{table}\n"
                   "\\centering\n")
         # Caption
-        header += f"\\caption{{Configuration of he best performing classifiers - {sex}.}}\n"
+        header += f"\\caption{{Configuration of the best performing classifiers - {sex}.}}\n"
         # Declaration of tabular
         header += ("\\begin{tabular}{ll}\n"
                    "\\toprule\n")
