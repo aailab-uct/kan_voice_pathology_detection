@@ -184,7 +184,7 @@ for sex, best_dict in best_archs.items():
     for lrs in lr_list:
         # path where to store results
         results_path = Path(".", "results_kan_adam",
-                            f"g{grid}_k{k}_entropy{entropy}_smoothing{smoothing}_lr{lrs}_reg", sex, str_arch)
+                            f"g{grid}_k{k}_entropy{entropy}_smoothing{smoothing}_lr{lrs}_reg{reg}", sex, str_arch)
 
         # create results directory for each dataset (done when defining results_path) and evaluated architecture
 

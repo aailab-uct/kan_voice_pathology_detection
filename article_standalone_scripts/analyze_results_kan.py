@@ -13,7 +13,7 @@ np.seterr(all="raise")
 def main():
     """
     Main function to analyze results of KAN architecture search.
-    :return: dict dictionary of best results, containing two dict for each sex
+    :return: best metrics, architecture, tuned params and source folder for each sex
     """
     best_results = {
         "men": {
@@ -91,6 +91,16 @@ def main():
                     best_results[sex]["uar_std"] = np.std(sensitivity/2+specificity/2)
                     best_results[sex]["architecture"] = arch.name
                     best_results[sex]["folder_name"] = kan_settings
+                    grid, k, entropy, smoothing, lr, reg = kan_settings.name.split("_", 5)
+                    best_results[sex]["params"] = {
+                        "grid": int(grid.removeprefix("g")),
+                        "k": int(k.removeprefix("k")),
+                        "lamb_entropy": float(entropy.removeprefix("entropy")),
+                        "label_smoothing": float(smoothing.removeprefix("smoothing")),
+                        "lr": float(lr.removeprefix("lr")),
+                        # Older Adam result folders end in "_reg" without its value.
+                        "reg_metric": reg.removeprefix("reg"),
+                    }
     print(f"Optimistic UAR: {optimistic_uar}")
     return best_results
 

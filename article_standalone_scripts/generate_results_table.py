@@ -149,9 +149,16 @@ def generate_results_from_nn(best_results, index = "MLP"):
 
     tables = {}
     params = {}
+    metric_columns = [
+        column
+        for metric in ("mcc", "sensitivity", "specificity", "uar", "bm", "gm")
+        for column in (metric, f"{metric}_std")
+    ]
     for sex in SEXES:
-        tables[sex] = (pd.DataFrame(best_results[sex], index=[index]))
-        tables[sex].drop("architecture", axis=1, inplace=True)
+        tables[sex] = pd.DataFrame(
+            [{column: best_results[sex][column] for column in metric_columns}],
+            index=[index],
+        )
         new_col_names = []
         for col in tables[sex].columns:
             if "std" in col:
@@ -161,7 +168,11 @@ def generate_results_from_nn(best_results, index = "MLP"):
         tables[sex].columns = new_col_names
         tables[sex] = tables[sex].transpose()
 
-        params[sex] = f'{{architecture: {best_results[sex]["architecture"].replace("[", "").replace("]", "").replace("_", "-")}}}'
+        configuration = {
+            "architecture": best_results[sex]["architecture"].replace("[", "").replace("]", "").replace("_", "-"),
+            **best_results[sex].get("params", {}),
+        }
+        params[sex] = str(configuration)
 
     return tables, params
 
