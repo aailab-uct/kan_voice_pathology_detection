@@ -86,7 +86,7 @@ def main(sex: str = "women",
 
 
 if __name__ == "__main__":
-    for current_classifier in ["knn", "svm_poly", "gauss_nb", "random_forest", "adaboost"]:
+    for current_classifier in ["knn", "svm_poly", "svm_rbf", "gauss_nb", "random_forest", "adaboost"]:
         for current_sex in ["women", "men"]:
             print(f"Computing {current_classifier} for {current_sex}")
             main(current_sex, current_classifier)

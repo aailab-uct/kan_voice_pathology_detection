@@ -63,12 +63,12 @@ def get_classifier(classifier_name: str, random_seed: int = 42):
             ("smote", CustomSMOTE(random_state=random_seed)),
             ("classifier", SVC(max_iter=int(1e6), random_state=random_seed))
         ])
-    # elif classifier_name == "svm_rbf":
-    #     pipe = Pipeline([
-    #         ("minmaxscaler", MinMaxScaler()),
-    #         ("smote", CustomSMOTE(random_state=random_seed)),
-    #         ("classifier", SVC(max_iter=int(1e6), random_state=random_seed))
-    #     ])
+    elif classifier_name == "svm_rbf":
+        pipe = Pipeline([
+            ("minmaxscaler", MinMaxScaler()),
+            ("smote", CustomSMOTE(random_state=random_seed)),
+            ("classifier", SVC(max_iter=int(1e6), random_state=random_seed))
+        ])
     elif classifier_name == "knn":
         pipe = Pipeline([
             ("minmaxscaler", MinMaxScaler()),
