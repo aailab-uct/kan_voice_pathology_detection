@@ -151,7 +151,7 @@ evaluated_ks = [3, 4, 5]
 evaluated_grids = [5, 6, 7, 8]
 evaluated_entropy = [0.01, 0.1, 1.0]
 #evaluated_smoothing = [0.0, 0.1]
-evaluated_smoothing = [0.0, 0.1, 0.2]
+evaluated_smoothing = [0.0, 0.02, 0.05, 0.1, 0.12, 0.15, 0.2]
 regularization_part = ['edge_forward_spline_n',
                        'edge_forward_sum',
                        'edge_forward_spline_u']
@@ -169,7 +169,7 @@ for regularization, entropy, smoothing, k, grid in settings_set:
         y=data['y']
 
         # path where to store results
-        results_path = Path(".", "results_kan_params_5epochs_nested",
+        results_path = Path(".", "results_kan_params",
                             f"g{grid}_k{k}_entropy{entropy}_smoothing{smoothing}_reg{regularization}",
                             sex)
         # get the number of features
@@ -242,14 +242,14 @@ for regularization, entropy, smoothing, k, grid in settings_set:
                 #               train_acc, train_uar, test_acc, test_tn, test_tp, test_fn, test_fp, test_uar
                 #           ), loss_fn=torch.nn.CrossEntropyLoss())
                 # infotainment during training
-                print(f"final test acc: {results['test_acc'][-1]}",
-                        f"mean test acc: {np.mean(results['test_acc'])}",
-                        f"best test uar: {np.max(results['test_uar'])} ",
-                        f"best test epoch uar: {np.argmax(results['test_uar'])}",
-                        f"best train epoch uar: {np.argmax(results['train_uar'])}",
-                        f"best train loss epoch uar: {np.argmin(results['train_loss'])}",
-                        f"best test loss epoch: {np.argmax(results['test_loss'])}")
-                print(f"uar: {results['test_uar']}")
+                # print(f"final test acc: {results['test_acc'][-1]}",
+                #         f"mean test acc: {np.mean(results['test_acc'])}",
+                #         f"best test uar: {np.max(results['test_uar'])} ",
+                #         f"best test epoch uar: {np.argmax(results['test_uar'])}",
+                #         f"best train epoch uar: {np.argmax(results['train_uar'])}",
+                #         f"best train loss epoch uar: {np.argmin(results['train_loss'])}",
+                #         f"best test loss epoch: {np.argmax(results['test_loss'])}")
+                # print(f"uar: {results['test_uar']}")
 
                 # dump results
                 with open(result_dir.joinpath(f'kan_res_{idx+1}.pickle'), "wb") as output_file:
