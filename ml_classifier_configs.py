@@ -59,38 +59,38 @@ def get_classifier(classifier_name: str, random_seed: int = 42):
     """
     if classifier_name == "svm_poly":
         pipe = Pipeline([
-            ("smote", CustomSMOTE(random_state=random_seed)),
             ("minmaxscaler", MinMaxScaler()),
+            ("smote", CustomSMOTE(random_state=random_seed)),
             ("classifier", SVC(max_iter=int(1e6), random_state=random_seed))
         ])
-    elif classifier_name == "svm_rbf":
-        pipe = Pipeline([
-            ("smote", CustomSMOTE(random_state=random_seed)),
-            ("minmaxscaler", MinMaxScaler()),
-            ("classifier", SVC(max_iter=int(1e6), random_state=random_seed))
-        ])
+    # elif classifier_name == "svm_rbf":
+    #     pipe = Pipeline([
+    #         ("minmaxscaler", MinMaxScaler()),
+    #         ("smote", CustomSMOTE(random_state=random_seed)),
+    #         ("classifier", SVC(max_iter=int(1e6), random_state=random_seed))
+    #     ])
     elif classifier_name == "knn":
         pipe = Pipeline([
-            ("smote", CustomSMOTE(random_state=random_seed)),
             ("minmaxscaler", MinMaxScaler()),
+            ("smote", CustomSMOTE(random_state=random_seed)),
             ("classifier", KNeighborsClassifier())
         ])
     elif  classifier_name == "gauss_nb":
         pipe = Pipeline([
-            ("smote", CustomSMOTE(random_state=random_seed)),
             ("minmaxscaler", MinMaxScaler()),
+            ("smote", CustomSMOTE(random_state=random_seed)),
             ("classifier", GaussianNB())
         ])
     elif classifier_name == "random_forest":
         pipe = Pipeline([
-            ("smote", CustomSMOTE(random_state=random_seed)),
             ("minmaxscaler", MinMaxScaler()),
+            ("smote", CustomSMOTE(random_state=random_seed)),
             ("classifier", RandomForestClassifier(random_state=random_seed))
         ])
     elif classifier_name == "adaboost":
         pipe = Pipeline([
-            ("smote", CustomSMOTE(random_state=random_seed)),
             ("minmaxscaler", MinMaxScaler()),
+            ("smote", CustomSMOTE(random_state=random_seed)),
             ("classifier", AdaBoostClassifier(random_state=random_seed, algorithm="SAMME"))
         ])
     else:

@@ -151,7 +151,7 @@ evaluated_ks = [3, 4, 5]
 evaluated_grids = [5, 6, 7, 8]
 evaluated_entropy = [0.01, 0.1, 1.0]
 #evaluated_smoothing = [0.0, 0.1]
-evaluated_smoothing = [0.0, 0.02, 0.05, 0.1, 0.12, 0.15, 0.2]
+evaluated_smoothing = [0.0, 0.1, 0.2]
 regularization_part = ['edge_forward_spline_n',
                        'edge_forward_sum',
                        'edge_forward_spline_u']
@@ -188,7 +188,7 @@ for regularization, entropy, smoothing, k, grid in settings_set:
 
         # iterate over KAN architectures and train for each dataset
         for arch in kan_archs:
-            # set_seed(N_SEED) # This would be the preffered way
+            set_seed(42) # This would be the preffered way
 
             # create results directory for each dataset (done when defining results_path)
             # and evaluated architecture
@@ -204,20 +204,18 @@ for regularization, entropy, smoothing, k, grid in settings_set:
             for idx, (train_index, test_index) in enumerate(skf.split(X, y)):
                 X_train, X_test = X[train_index], X[test_index]
                 y_train, y_test = y[train_index], y[test_index]
-
-                # KMeansSMOTE resampling. if 10x fails SMOTE resampling
-                X_resampled, y_resampled = CustomSMOTE(random_state=RANDOM_SEED).fit_resample(X_train,
-                                                                                                y_train)
                 # MinMaxScaling
                 scaler = MinMaxScaler(feature_range=(-1, 1))
-                X_train_scaled = scaler.fit_transform(X_resampled).astype(np.float32)
+                X_train_scaled = scaler.fit_transform(X_train).astype(np.float32)
                 X_test_scaled = scaler.transform(X_test).astype(np.float32)
 
-
+                # KMeansSMOTE resampling. if 10x fails SMOTE resampling
+                X_resampled, y_resampled = CustomSMOTE(random_state=RANDOM_SEED).fit_resample(X_train_scaled,
+                                                                                                y_train)
 
                 # KAN dataset format, load it to device
                 dataset = {
-                    "train_input": torch.from_numpy(X_train_scaled).type(torch_dtype).to(DEVICE),
+                    "train_input": torch.from_numpy(X_resampled).type(torch_dtype).to(DEVICE),
                     "train_label": torch.from_numpy(y_resampled).to(DEVICE),
                     "test_input": torch.from_numpy(X_test_scaled).type(torch_dtype).to(DEVICE),
                     "test_label": torch.from_numpy(y_test).to(DEVICE)

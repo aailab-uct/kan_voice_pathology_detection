@@ -151,11 +151,11 @@ def main():
         for first in steps:
             first_layer = input_size * 2 - int(first * input_size)
             if first_layer > 0:
-                mlp_archs.append([input_size, first_layer, 2])
+                mlp_archs.append([input_size, first_layer])
             for second in steps:
                 second_layer = input_size * 2 - int(second * input_size)
                 if first_layer >= second_layer > 0:
-                    mlp_archs.append([input_size, first_layer, second_layer, 2])
+                    mlp_archs.append([input_size, first_layer, second_layer])
         print(mlp_archs)
 
         for arch in mlp_archs:
@@ -173,22 +173,21 @@ def main():
                 X_train, X_test = X[train_index], X[test_index]
                 y_train, y_test = y[train_index], y[test_index]
 
-                # KMeansSMOTE resampling. if 10x fails SMOTE resampling
-                X_resampled, y_resampled = CustomSMOTE(random_state=RANDOM_SEED).fit_resample(X_train, y_train)
                 # MinMaxScaling
                 scaler = MinMaxScaler(feature_range=(-1, 1))
-                X_train_scaled = scaler.fit_transform(X_resampled)
+                X_train_scaled = scaler.fit_transform(X_train)
                 X_test_scaled = scaler.transform(X_test)
 
-
+                # KMeansSMOTE resampling. if 10x fails SMOTE resampling
+                X_resampled, y_resampled = CustomSMOTE(random_state=RANDOM_SEED).fit_resample(X_train_scaled, y_train)
 
                 # Create DataLoader for training and validation sets
-                train_dataset = TensorDataset(torch.from_numpy(X_train_scaled).to(DEVICE),
+                train_dataset = TensorDataset(torch.from_numpy(X_resampled).to(DEVICE),
                                             torch.from_numpy(y_resampled).type(torch.long).to(DEVICE))
                 val_dataset = TensorDataset(torch.from_numpy(X_test_scaled).to(DEVICE),
                                             torch.from_numpy(y_test).type(torch.long).to(DEVICE))
 
-                train_loader = DataLoader(train_dataset, batch_size=len(y_train), shuffle=True)
+                train_loader = DataLoader(train_dataset, batch_size=len(y_resampled), shuffle=True)
                 val_loader = DataLoader(val_dataset, batch_size=len(y_test), shuffle=False)
                 # create model
                 model = MLP(arch).to(DEVICE)

@@ -199,17 +199,17 @@ for sex, best_dict in best_archs.items():
         for idx, (train_index, test_index) in enumerate(skf.split(X, y)):
             X_train, X_test = X[train_index], X[test_index]
             y_train, y_test = y[train_index], y[test_index]
-
-            # KMeansSMOTE resampling. if 10x fails SMOTE resampling
-            X_resampled, y_resampled = CustomSMOTE(random_state=RANDOM_SEED).fit_resample(X_train, y_train)
             # MinMaxScaling
             scaler = MinMaxScaler(feature_range=(-1, 1))
-            X_train_scaled = scaler.fit_transform(X_resampled).astype(np.float32)
+            X_train_scaled = scaler.fit_transform(X_train).astype(np.float32)
             X_test_scaled = scaler.transform(X_test).astype(np.float32)
+
+            # KMeansSMOTE resampling. if 10x fails SMOTE resampling
+            X_resampled, y_resampled = CustomSMOTE(random_state=RANDOM_SEED).fit_resample(X_train_scaled, y_train)
 
             # KAN dataset format, load it to device
             dataset = {
-                "train_input": torch.from_numpy(X_train_scaled).type(torch_dtype).to(DEVICE),
+                "train_input": torch.from_numpy(X_resampled).type(torch_dtype).to(DEVICE),
                 "train_label": torch.from_numpy(y_resampled).to(DEVICE),
                 "test_input": torch.from_numpy(X_test_scaled).type(torch_dtype).to(DEVICE),
                 "test_label": torch.from_numpy(y_test).to(DEVICE)
