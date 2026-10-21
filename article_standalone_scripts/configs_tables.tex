@@ -1,0 +1,54 @@
+\begin{table}
+\centering
+\caption{Configuration of the best performing classifiers - women.}
+\begin{tabular}{ll}
+\toprule
+Classifier & Parameters\\
+\midrule
+ADABOOST & \shortstack[l]{learning\_rate: 1 \\ n\_estimators: 30} \\
+\midrule
+GAUSS NB & \shortstack[l]{var\_smoothing: 1e-09} \\
+\midrule
+KNN & \shortstack[l]{n\_neighbors: 13 \\ p: 2 \\ weights: uniform} \\
+\midrule
+RANDOM FOREST & \shortstack[l]{criterion: gini \\ max\_features: sqrt \\ min\_samples\_split: 2 \\ n\_estimators: 210} \\
+\midrule
+SVM POLY & \shortstack[l]{C: 9500 \\ degree: 3 \\ gamma: 0.025 \\ kernel: poly} \\
+\midrule
+SVM RBF & \shortstack[l]{C: 10000 \\ gamma: 0.01 \\ kernel: rbf} \\
+\midrule
+MLP & \shortstack[l]{architecture: 20-26-24} \\
+\midrule
+KAN & \shortstack[l]{architecture: 20-12-2 \\ grid: 5 \\ k: 5 \\ lamb\_entropy: 0.1 \\ label\_smoothing: 0.2 \\ lr: 0.1 \\ reg\_metric: edge\_forward\_spline\_n} \\
+\bottomrule
+\end{tabular}
+\label{tab:configs_women}
+\end{table}
+
+
+\begin{table}
+\centering
+\caption{Configuration of the best performing classifiers - men.}
+\begin{tabular}{ll}
+\toprule
+Classifier & Parameters\\
+\midrule
+ADABOOST & \shortstack[l]{learning\_rate: 1 \\ n\_estimators: 260} \\
+\midrule
+GAUSS NB & \shortstack[l]{var\_smoothing: 1e-09} \\
+\midrule
+KNN & \shortstack[l]{n\_neighbors: 27 \\ p: 1 \\ weights: distance} \\
+\midrule
+RANDOM FOREST & \shortstack[l]{criterion: gini \\ max\_features: sqrt \\ min\_samples\_split: 5 \\ n\_estimators: 170} \\
+\midrule
+SVM POLY & \shortstack[l]{C: 5 \\ degree: 2 \\ gamma: 0.5 \\ kernel: poly} \\
+\midrule
+SVM RBF & \shortstack[l]{C: 1000 \\ gamma: 0.025 \\ kernel: rbf} \\
+\midrule
+MLP & \shortstack[l]{architecture: 20-26} \\
+\midrule
+KAN & \shortstack[l]{architecture: 20-36-2 \\ grid: 5 \\ k: 3 \\ lamb\_entropy: 0.1 \\ label\_smoothing: 0.2 \\ lr: 0.5 \\ reg\_metric: edge\_forward\_spline\_n} \\
+\bottomrule
+\end{tabular}
+\label{tab:configs_men}
+\end{table}
